@@ -1,9 +1,24 @@
 from random import randint, choices, random
+import pygame
+import sys
 
-# Rarity distribution for items in the case
-# The sum of these values should equal 1
+# Initialize Pygame
 
-rarity = {
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+pygame.display.set_caption("Counter-Strike Case Opening Simulator V0.1 TEST")
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 36)
+inventory_font = pygame.font.SysFont(None, 24)
+
+
+# Inventory to hold opened items
+
+inventory = []
+
+# Rarity distribution for items in Case 1
+
+rarity1 = {
     "Common" : 0.79, # Blue
     "Uncommon" : 0.15, # Purple
     "Rare" : 0.04, # Pink
@@ -11,9 +26,26 @@ rarity = {
     "Legendary" : 0.001 # Gold
 }
 
-# All case common items, uncommon items, rare items, mythical items, and legendary items with their weights
-# Weights are arbitrary and can be adjusted to change the likelihood of getting a specific item within its rarity category
-# The sum of weights in each category does not need to equal 1, as they are relative weights
+rarity2 = {
+    "Common" : 0.70, # Blue
+    "Uncommon" : 0.22, # Purple
+    "Rare" : 0.06, # Pink
+    "Mythical" : 0.014, # Red
+    "Legendary" : 0.001 # Gold
+}
+
+# Colors for each rarity (for UI)
+
+rarity_colors = {
+    "Common": (0, 112, 221),
+    "Uncommon": (163, 53, 238),
+    "Rare": (255, 105, 180),
+    "Mythical": (255, 69, 58),
+    "Legendary": (255, 215, 0),
+}
+
+
+# All case common items, uncommon items, rare items, mythical items, and legendary items with their weights for Case 1
 
 common1 = {
     "USP-S / Desert Mant" : 0.26,
@@ -62,6 +94,8 @@ legendary1 = {
     "★ Navaja Knife / Tiger Tooth" : 1.0,
     "★ Stiletto Knife / Slaughter" : 1.0,
 }
+
+# All case common items, uncommon items, rare items, mythical items, and legendary items with their weights for Case 2
 
 common2 = {
     "CZ75-Auto / Tigris" : 0.16,
@@ -117,7 +151,6 @@ legendary2 = {
 }
 
 # Wear distribution for items
-# The sum of these values should equal 1
 
 wear = {
     "Factory New" : 0.10,
@@ -129,9 +162,10 @@ wear = {
 
 # Function to open a case and return the item obtained
 # There are 2 cases currently implemented, each with its own set of items
+# Case 2 is currently better than the Case 1, but this will be compensated by adding a higher price for the keys
 
 def open_case_1():
-    rarity_choice = choices(list(rarity.keys()), weights=list(rarity.values()))[0]
+    rarity_choice = choices(list(rarity1.keys()), weights=list(rarity1.values()))[0]
     if rarity_choice == "Common":
         item = choices(list(common1.keys()), weights=list(common1.values()))[0]
     elif rarity_choice == "Uncommon":
@@ -144,7 +178,7 @@ def open_case_1():
         item = choices(list(legendary1.keys()), weights=list(legendary1.values()))[0]
 
     # 10% chance for the item to be a StatTrak™ version
-    # StatTrak™ items track the number of kills made with that weapon
+    # StatTrak™ items track the number of kills made with that weapon, increasing the value of the item
 
     if random() < 0.1:
         item = "StatTrak™ " + item
@@ -152,7 +186,7 @@ def open_case_1():
     return f"{item} ({rarity_choice})"
 
 def open_case_2():
-    rarity_choice = choices(list(rarity.keys()), weights=list(rarity.values()))[0]
+    rarity_choice = choices(list(rarity2.keys()), weights=list(rarity2.values()))[0]
     if rarity_choice == "Common":
         item = choices(list(common2.keys()), weights=list(common2.values()))[0]
     elif rarity_choice == "Uncommon":
@@ -170,7 +204,12 @@ def open_case_2():
     return f"{item} ({rarity_choice})"
 
 # This feature is only for debugging purposes and is not part of the actual game
-# It simulates opening 100 cases of case 1 and 2 and prints the results, displaying the item and its wear condition
+# It simulates opening 100 cases of Case 1 and 2 and prints the results, displaying the item and its wear condition
+
+"""
+
+THIS LINE IS DESIGNED FOR DEBUGGING AND/OR TESTING PURPOSES ONLY
+REMOVE OR COMMENT OUT WHEN NOT NEEDED
 
 print("Case 1 Results:")
 print("")
@@ -186,3 +225,65 @@ print("")
 
 for i in range(100):
     print(open_case_2() + " | Wear: " + choices(list(wear.keys()), weights=list(wear.values()))[0])
+
+"""
+
+# Pygame UI Loop - NOT TO BE CHANGED
+
+current_screen = "main_menu"
+
+state = True
+while state == True:
+    for event in pygame.event.get():
+        
+        if event.type == pygame.QUIT:
+
+            state = False
+        if current_screen == "main_menu":
+
+            casebutton_color = (70, 130, 180)
+            casebutton_hover = (100, 160, 210)
+            casebutton_rect = pygame.Rect(300, 400, 200, 60)
+
+            inventorybutton_color = (70, 130, 180)
+            inventorybutton_hover = (100, 160, 210)
+            inventorybutton_rect = pygame.Rect(650, 20, 130, 40)
+
+            screen.fill((30, 30, 30))
+            title = font.render("Counter-Strike Case Opening Simulator V0.1 TEST", True, (255, 255, 255))
+            subtitle = font.render("Made by coldHalo", True, (255, 255, 255))
+            screen.blit(subtitle, (275, 100))
+            screen.blit(title, (100, 50))
+
+            mouse_pos = pygame.mouse.get_pos()
+            color = casebutton_hover if casebutton_rect.collidepoint(mouse_pos) else casebutton_color
+            pygame.draw.rect(screen, color, casebutton_rect, border_radius=10)
+
+            casebutton_text = font.render("Open Case", True, (255, 255, 255))
+            screen.blit(casebutton_text, (casebutton_rect.x + 35, casebutton_rect.y + 17))
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+
+                if inventorybutton_rect.collidepoint(event.pos):
+                    current_screen = "inventory"
+
+                if casebutton_rect.collidepoint(event.pos):
+
+                    caseresult = open_case_1() + " | Wear: " + choices(list(wear.keys()), weights=list(wear.values()))[0]
+                    inventory.append(caseresult)
+                    print("You have obtained: " + caseresult)
+
+        if current_screen == "inventory":
+
+            screen.fill((30, 30, 30))
+            title = font.render("Inventory", True, (255, 255, 255))
+            screen.blit(title, (350, 20))
+
+            for idx, item in enumerate(inventory):
+                item_text = inventory_font.render(f"{idx + 1}. {item}", True, (255, 255, 255))
+                screen.blit(item_text, (50, 70 + idx * 30))
+
+        pygame.display.flip()
+        clock.tick(60)
+
+pygame.quit()
